@@ -1,0 +1,20 @@
+version = 0.1
+
+# メールアドレス（SenderEmail / RecipientEmail）はここに書かず、
+# `sam deploy --parameter-overrides` で渡す（app/README.md 参照）。
+[default.global.parameters]
+stack_name = "expireguard"
+region = "us-east-1"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+# 変更セットを確認してから実行する
+confirm_changeset = true

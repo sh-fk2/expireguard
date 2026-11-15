@@ -1,0 +1,386 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >-
+  ExpireGuard - ポイント・サブスクの期限をスクショで登録し、期限前にメール通知するサーバーレスアプリ
+  (Weekend Challenge "No Pipeline, No Problem")
+
+Parameters:
+  SenderEmail:
+    Type: String
+    Description: SES で認証済みの送信元メールアドレス（リポジトリにはコミットしない）
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+    ConstraintDescription: メールアドレス形式で指定してください
+  RecipientEmail:
+    Type: String
+    Description: 通知の宛先メールアドレス（SES サンドボックスでは認証済みであること）
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+    ConstraintDescription: メールアドレス形式で指定してください
+  BedrockModelId:
+    Type: String
+    Description: 画像入力対応モデルの us. 付き推論プロファイル ID（既定は Amazon Nova 2 Lite。Claude Sonnet 4.6 は us.anthropic.claude-sonnet-4-6）
+    Default: us.amazon.nova-2-lite-v1:0
+    AllowedPattern: '^[A-Za-z0-9.:_-]+$'
+
+Rules:
+  # リージョンは us-east-1 固定（SES 認証・Bedrock の有効化単位をそろえるため）
+  RegionGuard:
+    Assertions:
+      - Assert: !Equals [!Ref "AWS::Region", us-east-1]
+        AssertDescription: このスタックは us-east-1 にのみデプロイできます
+
+Conditions:
+  # "us." で始まる場合は推論プロファイル ID とみなし、基盤モデル ID を切り出す
+  IsUsInferenceProfile: !Equals [!Select [0, !Split [".", !Ref BedrockModelId]], us]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    CodeUri: src/
+    MemorySize: 256
+    Timeout: 15
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref ItemsTable
+        BUCKET_NAME: !Ref ScreenshotBucket
+
+Resources:
+  # ---------------------------------------------------------------- データ
+  ItemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}-items"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: itemId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: itemId
+          KeyType: RANGE
+      # 確認されない下書きを自動削除する
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+  ScreenshotBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      # 要件 11.4: アップロード画像は7日で自動削除
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-uploads-7days
+            Status: Enabled
+            Prefix: uploads/
+            ExpirationInDays: 7
+          - Id: abort-incomplete-multipart
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [POST]
+            AllowedOrigins:
+              - !Sub "https://main.${AmplifyApp.DefaultDomain}"
+              - http://localhost:8080
+            AllowedHeaders: ["*"]
+            MaxAge: 600
+
+  ScreenshotBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ScreenshotBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !GetAtt ScreenshotBucket.Arn
+              - !Sub "${ScreenshotBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+
+  # ---------------------------------------------------------------- フロント配信
+  # Amplify Hosting（手動デプロイ）。Git 連携・ビルドパイプラインは持たない
+  AmplifyApp:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: !Sub "${AWS::StackName}-web"
+      Platform: WEB
+
+  AmplifyBranch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      AppId: !GetAtt AmplifyApp.AppId
+      BranchName: main
+      Stage: PRODUCTION
+      EnableAutoBuild: false
+
+  # ---------------------------------------------------------------- 認証（Cognito）
+  # 利用者は管理者が admin-create-user で作成する（セルフサインアップ無効）。
+  # ユーザー削除・置き換えでスタック更新が利用者を巻き込まないよう Retain にする
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      UserPoolName: !Sub "${AWS::StackName}-users"
+      # メールアドレスをユーザー名として使う
+      UsernameAttributes: [email]
+      AutoVerifiedAttributes: [email]
+      UsernameConfiguration:
+        CaseSensitive: false
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: true
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 12
+          RequireLowercase: true
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+      # パスワード再設定は管理者のみ（メール経由のセルフ回復は使わない）
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: admin_only
+            Priority: 1
+
+  # SPA 用のパブリッククライアント（シークレットなし）。
+  # USER_PASSWORD_AUTH でフロントから InitiateAuth を直接呼ぶ
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${AWS::StackName}-web"
+      UserPoolId: !Ref UserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      # 存在しないユーザーと誤ったパスワードを区別できないエラーにする
+      PreventUserExistenceErrors: ENABLED
+      EnableTokenRevocation: true
+      AccessTokenValidity: 60
+      IdTokenValidity: 60
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+
+  # ---------------------------------------------------------------- API
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      # 全ルートを Cognito の JWT（IdToken）必須にする。
+      # CORS のプリフライト（OPTIONS）は HTTP API が CORS 設定に基づき自動応答するため、認証対象外
+      Auth:
+        DefaultAuthorizer: CognitoJwt
+        Authorizers:
+          CognitoJwt:
+            IdentitySource: $request.header.Authorization
+            JwtConfiguration:
+              issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${UserPool}"
+              audience:
+                - !Ref UserPoolClient
+      CorsConfiguration:
+        AllowOrigins:
+          - !Sub "https://main.${AmplifyApp.DefaultDomain}"
+          - http://localhost:8080
+        AllowMethods: [GET, POST, PATCH, DELETE, OPTIONS]
+        AllowHeaders: [Content-Type, Authorization]
+        MaxAge: 600
+      # 認証済みでも、全体と通知メール送信に絞りを設ける
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 10
+      RouteSettings:
+        "POST /notify/test":
+          ThrottlingBurstLimit: 2
+          ThrottlingRateLimit: 0.2
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiAccessLogGroup.Arn
+        Format: '{"requestId":"$context.requestId","routeKey":"$context.routeKey","status":"$context.status","latency":"$context.responseLatency"}'
+
+  # ---------------------------------------------------------------- Lambda
+  ApiFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: アイテム CRUD・/summary・/uploads
+      Handler: api.handler.lambda_handler
+      LoggingConfig:
+        LogGroup: !Ref ApiFunctionLogGroup
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:Query
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:DeleteItem
+              Resource: !GetAtt ItemsTable.Arn
+            # 署名付き POST の署名者として、アップロード先プレフィックスの PutObject だけ許可。
+            # ユーザーごとのキー（uploads/<sub>/）は IAM では表現できないため、コード側で強制する
+            - Effect: Allow
+              Action: s3:PutObject
+              Resource: !Sub "${ScreenshotBucket.Arn}/uploads/*"
+      Events:
+        GetSummary:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Method: GET, Path: /summary}
+        ListItems:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Method: GET, Path: /items}
+        CreateItem:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Method: POST, Path: /items}
+        UpdateItem:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Method: PATCH, Path: "/items/{id}"}
+        DeleteItem:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Method: DELETE, Path: "/items/{id}"}
+        CreateUpload:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Method: POST, Path: /uploads}
+
+  ExtractFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+
+  ExtractFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: S3 の画像を Bedrock（Claude vision）で読み取り下書き保存
+      Handler: extract.handler.lambda_handler
+      # HTTP API の統合タイムアウトは30秒。Lambda 側は余裕を持たせる
+      Timeout: 60
+      MemorySize: 512
+      LoggingConfig:
+        LogGroup: !Ref ExtractFunctionLogGroup
+      Environment:
+        Variables:
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action: dynamodb:PutItem
+              Resource: !GetAtt ItemsTable.Arn
+            # ユーザーごとのキー検証（uploads/<sub>/ のみ）は extract のコードで強制する
+            - Effect: Allow
+              Action: s3:GetObject
+              Resource: !Sub "${ScreenshotBucket.Arn}/uploads/*"
+            # Converse API は bedrock:InvokeModel で認可される。
+            # 推論プロファイル経由では、プロファイルと各リージョンの基盤モデルの両方が必要
+            - Effect: Allow
+              Action: bedrock:InvokeModel
+              Resource:
+                - !Sub "arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/${BedrockModelId}"
+                - !Sub
+                  - "arn:${AWS::Partition}:bedrock:us-*::foundation-model/${BaseModelId}"
+                  - BaseModelId: !If
+                      - IsUsInferenceProfile
+                      - !Select [1, !Split ["us.", !Ref BedrockModelId]]
+                      - !Ref BedrockModelId
+      Events:
+        Extract:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Method: POST, Path: /extract}
+
+  NotifyFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+
+  NotifyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: 日次の期限判定・SES 送信・テスト通知
+      Handler: notify.handler.lambda_handler
+      Timeout: 60
+      LoggingConfig:
+        LogGroup: !Ref NotifyFunctionLogGroup
+      Environment:
+        Variables:
+          SENDER_EMAIL: !Ref SenderEmail
+          RECIPIENT_EMAIL: !Ref RecipientEmail
+          DASHBOARD_URL: !Sub "https://main.${AmplifyApp.DefaultDomain}"
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:Query
+                - dynamodb:Scan # 日次通知で全ユーザー分を走査する
+                - dynamodb:UpdateItem
+              Resource: !GetAtt ItemsTable.Arn
+            # サンドボックスでは送信元・宛先の両アイデンティティが認可対象になる
+            - Effect: Allow
+              Action: ses:SendEmail
+              Resource:
+                - !Sub "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/${SenderEmail}"
+                - !Sub "arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/${RecipientEmail}"
+      Events:
+        DailySchedule:
+          Type: ScheduleV2
+          Properties:
+            Description: 毎日 09:00 JST に期限を判定して通知
+            ScheduleExpression: cron(0 9 * * ? *)
+            ScheduleExpressionTimezone: Asia/Tokyo
+        TestNotification:
+          Type: HttpApi
+          Properties: {ApiId: !Ref HttpApi, Method: POST, Path: /notify/test}
+
+Outputs:
+  ApiUrl:
+    Description: フロントの config.js に設定する API のベース URL
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+  SiteUrl:
+    Description: ダッシュボードの URL（Amplify Hosting）
+    Value: !Sub "https://main.${AmplifyApp.DefaultDomain}"
+  AmplifyAppId:
+    Description: フロント配置（手動デプロイ）で使う Amplify アプリ ID
+    Value: !GetAtt AmplifyApp.AppId
+  ScreenshotBucketName:
+    Value: !Ref ScreenshotBucket
+  UserPoolId:
+    Description: ユーザー作成コマンド（aws cognito-idp admin-create-user）で使う User Pool ID
+    Value: !Ref UserPool
+  UserPoolClientId:
+    Description: フロントの config.js に設定するアプリクライアント ID（シークレットなし）
+    Value: !Ref UserPoolClient
+  ItemsTableName:
+    Value: !Ref ItemsTable

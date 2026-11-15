@@ -1,0 +1,8 @@
+# 開発・検査用の固定版（Lambda 本体は Lambda ランタイム同梱の boto3 を使うため依存なし）
+boto3==1.40.54
+moto[dynamodb,s3,ses,sesv2]==5.1.19
+pytest==9.0.1
+pytest-cov==7.0.0
+ruff==0.16.7
+bandit==1.9.4
+PyYAML==6.0.3  # template.yaml の認証設定テスト用（CloudFormation 短縮記法を読む）

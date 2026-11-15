@@ -1,0 +1,138 @@
+<mxfile host="Electron">
+  <diagram id="Z6mUBbA2gzpauV__UQPC" name="ページ-1">
+    <mxGraphModel dx="1981" dy="984" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1350" pageHeight="1000" math="0" shadow="0" adaptiveColors="auto">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="cloud" parent="1" style="html=1;whiteSpace=wrap;fontSize=12;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#000000;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#000000;container=1;collapsible=0;recursiveResize=0" value="AWS Cloud" vertex="1">
+          <mxGeometry height="940" width="1150" x="168" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="region" parent="cloud" style="html=1;whiteSpace=wrap;fontSize=12;shape=mxgraph.aws4.group;grIcon=mxgraph.aws4.group_region;strokeColor=#00A4A6;fillColor=none;verticalAlign=top;align=left;spacingLeft=30;fontColor=#000000;dashed=1;container=1;collapsible=0;recursiveResize=0" value="Region: us-east-1" vertex="1">
+          <mxGeometry height="880" width="1110" x="20" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="amplify" parent="region" style="fontColor=#16191F;fillColor=#DD344C;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.amplify;" value="AWS Amplify Hosting&lt;br&gt;static SPA" vertex="1">
+          <mxGeometry height="60" width="60" x="80" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cognito" parent="region" style="fontColor=#16191F;fillColor=#DD344C;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.cognito;" value="Amazon Cognito&lt;br&gt;user pool (JWT)" vertex="1">
+          <mxGeometry height="60" width="60" x="80" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="apigw" parent="region" style="fontColor=#16191F;fillColor=#8C4FFF;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.api_gateway;" value="Amazon API Gateway&lt;br&gt;HTTP API&lt;br&gt;+ JWT authorizer" vertex="1">
+          <mxGeometry height="60" width="60" x="280" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="s3" parent="region" style="fontColor=#16191F;fillColor=#7AA116;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.s3;" value="Amazon S3&lt;br&gt;screenshots&lt;br&gt;(deleted in 7 days)" vertex="1">
+          <mxGeometry height="60" width="60" x="530" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="extract" parent="region" style="fontColor=#16191F;fillColor=#ED7100;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="Lambda: extract&lt;br&gt;screenshot to JSON" vertex="1">
+          <mxGeometry height="60" width="60" x="530" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="api" parent="region" style="fontColor=#16191F;fillColor=#ED7100;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="Lambda: api&lt;br&gt;items / summary / uploads" vertex="1">
+          <mxGeometry height="60" width="60" x="530" y="446" as="geometry" />
+        </mxCell>
+        <mxCell id="notify" parent="region" style="fontColor=#16191F;fillColor=#ED7100;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.lambda;" value="Lambda: notify&lt;br&gt;expiry check + mail" vertex="1">
+          <mxGeometry height="60" width="60" x="530" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="sched" parent="region" style="fontColor=#16191F;fillColor=#E7157B;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.eventbridge;" value="EventBridge Scheduler&lt;br&gt;daily 09:00 JST" vertex="1">
+          <mxGeometry height="60" width="60" x="530" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="bedrock" parent="region" style="fontColor=#16191F;fillColor=#01A88D;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.bedrock;" value="Amazon Bedrock&lt;br&gt;Nova 2 Lite (vision)" vertex="1">
+          <mxGeometry height="60" width="60" x="790" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="ddb" parent="region" style="fontColor=#16191F;fillColor=#C925D1;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.dynamodb;" value="Amazon DynamoDB&lt;br&gt;items table" vertex="1">
+          <mxGeometry height="60" width="60" x="790" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="ses" parent="region" style="fontColor=#16191F;fillColor=#DD344C;strokeColor=#ffffff;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.resourceIcon;resIcon=mxgraph.aws4.simple_email_service;" value="Amazon SES&lt;br&gt;email" vertex="1">
+          <mxGeometry height="60" width="60" x="880" y="605" as="geometry" />
+        </mxCell>
+        <mxCell id="user" parent="1" style="fontColor=#16191F;fillColor=#242F3E;strokeColor=none;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=12;aspect=fixed;shape=mxgraph.aws4.user;" value="user" vertex="1">
+          <mxGeometry height="60" width="60" x="38" y="505" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-user-to-amplify" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;exitX=0.262;exitY=0;entryX=0;entryY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" target="amplify" value="open site">
+          <mxGeometry relative="1" x="0.478" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-user-to-s3" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;exitX=1.041;exitY=0.194;entryX=0;entryY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" target="s3" value="upload via presigned URL">
+          <mxGeometry relative="1" x="0.5" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-user-to-apigw" edge="1" parent="1" source="user" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="apigw" value="API calls + JWT">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-user-to-cognito" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;entryX=0;entryY=0.5;" target="cognito" value="sign in">
+          <mxGeometry relative="1" x="0.275" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="77.83" y="285.03" />
+            </Array>
+            <mxPoint x="77.83" y="503.24" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-apigw-to-cognito" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#E7157B;dashed=1;align=center;entryX=1;entryY=0.5;" target="cognito" value="verify JWT">
+          <mxGeometry relative="1" x="0.3879" y="-1" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="498.42" y="285.83" />
+              <mxPoint x="483" y="285.83" />
+            </Array>
+            <mxPoint x="498.42" y="505" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-apigw-to-extract" edge="1" parent="1" source="apigw" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=left;spacingLeft=6;exitX=1;exitY=0.25;entryX=0;entryY=0.5;" target="extract" value="/extract">
+          <mxGeometry relative="1" x="0.2" as="geometry">
+            <Array as="points">
+              <mxPoint x="558.03" y="520.03" />
+              <mxPoint x="558.03" y="375" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-apigw-to-api" edge="1" parent="1" source="apigw" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;exitX=1;exitY=0.75;" value="/items /summary /uploads">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="717.81" y="549.98" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-apigw-to-notify" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;entryX=0;entryY=0.5;" target="notify" value="/notify/test">
+          <mxGeometry relative="1" x="0.5" as="geometry">
+            <Array as="points">
+              <mxPoint x="498" y="620" />
+              <mxPoint x="498" y="695" />
+            </Array>
+            <mxPoint x="498" y="615" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-extract-to-s3" edge="1" parent="1" source="extract" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=left;spacingLeft=6;exitX=0.5;exitY=0;entryX=0.5;entryY=1;entryDy=55;entryPerimeter=0;" target="s3" value="read image">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-extract-to-bedrock" edge="1" parent="1" source="extract" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;exitX=1;exitY=0.25;entryX=0;entryY=0.25;" target="bedrock" value="image to JSON">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-extract-to-ddb" edge="1" parent="1" source="extract" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=left;spacingLeft=6;exitX=1;exitY=0.75;entryX=0;entryY=0.25;" target="ddb" value="save draft">
+          <mxGeometry relative="1" x="0.25" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-api-to-ddb" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;entryX=0;entryY=0.75;" target="ddb" value="items CRUD">
+          <mxGeometry relative="1" x="0.3" as="geometry">
+            <mxPoint x="777.81" y="549.98" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-notify-to-ddb" edge="1" parent="1" source="notify" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;exitX=1;exitY=0.25;entryX=0.5;entryY=1;entryDy=40;entryPerimeter=0;" target="ddb" value="scan items">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-notify-to-ses" edge="1" parent="1" source="notify" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;exitX=1;exitY=0.75;" target="ses" value="send">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-ses-to-inbox" edge="1" parent="1" source="ses" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=center;exitX=1;exitY=0.5;" value="alert mail">
+          <mxGeometry relative="1" x="0.4095" as="geometry">
+            <mxPoint x="1" as="offset" />
+            <Array as="points">
+              <mxPoint x="1198.07" y="710" />
+              <mxPoint x="1198.07" y="940" />
+              <mxPoint x="67.93" y="940" />
+            </Array>
+            <mxPoint x="67.92" y="585" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-sched-to-notify" edge="1" parent="1" source="sched" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=block;endFill=1;rounded=0;strokeWidth=2;fontSize=11;labelBackgroundColor=none;verticalAlign=bottom;strokeColor=#545B64;align=left;spacingLeft=6;exitX=0.5;exitY=0;entryX=0.5;entryY=1;entryDy=40;entryPerimeter=0;" target="notify" value="invoke">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

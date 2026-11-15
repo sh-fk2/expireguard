@@ -1,0 +1,26 @@
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+branch = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = [".aws-sam", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+# テストでは assert を使う
+"tests/*" = ["S101"]
+# 抽出プロンプトは設計メモの確定版を一字一句保つため、長い行を許す
+"src/extract/prompts.py" = ["E501"]
+"tests/test_extract.py" = ["E501"]
+
+[tool.bandit]
+exclude_dirs = [".venv", "tests"]

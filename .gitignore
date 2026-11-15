@@ -1,0 +1,16 @@
+.venv/
+.aws-sam/
+.pytest_cache/
+.ruff_cache/
+.coverage
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+web.zip
+
+# 環境ごとの設定（API の URL とクライアント ID）。config.example.js を写して作る
+app/frontend/config.js
+
+# mock/build.mjs の出力
+mock/site/

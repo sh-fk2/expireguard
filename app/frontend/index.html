@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="data:," />
+    <title>ExpireGuard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --canvas:#f5f5f5;
+        --paper:#ffffff;
+        --surface-alt:#fafafa;
+        --ink:#0a0a0a;
+        --ink-soft:#171717;
+        --mid:#737373;
+        --hairline:#e5e5e5;
+        --danger:#D92D20;
+        --warn:#DC6803;
+        --ok:#027A48;
+        --ember:#e7000b;
+        --radius-card:24px;
+        --radius-pill:18px;
+        --shadow-card:0 0 0 1px rgba(23,23,23,.05),0 1px 3px rgba(0,0,0,.1),0 1px 2px -1px rgba(0,0,0,.1);
+        --font:'Geist','Inter','Hiragino Sans','Noto Sans JP',ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+      }
+      *{box-sizing:border-box}
+      html,body{margin:0;padding:0}
+      body{
+        background:var(--canvas);
+        color:var(--ink);
+        font-family:var(--font);
+        font-size:14px;
+        line-height:1.43;
+        -webkit-font-smoothing:antialiased;
+        font-feature-settings:"ss01" on,"cv11" on;
+      }
+      button,[role="button"],select,input{font-family:inherit}
+      button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]){min-height:36px}
+      .tnum{font-variant-numeric:tabular-nums}
+
+      .app{max-width:960px;margin:0 auto;padding:0 20px 64px}
+
+      /* ---------- Header ---------- */
+      header.topbar{
+        display:flex;align-items:center;justify-content:space-between;gap:16px;
+        padding:20px 0 16px;
+      }
+      .wordmark{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px;letter-spacing:-.025em;color:var(--ink)}
+      .wordmark .mark{
+        width:30px;height:30px;border-radius:9px;background:var(--ink);color:#fafafa;
+        display:flex;align-items:center;justify-content:center;flex:none;
+      }
+      .wordmark .mark svg{width:17px;height:17px}
+      .top-actions{display:flex;align-items:center;gap:10px}
+      .lang-toggle{
+        display:flex;background:var(--paper);border:1px solid var(--hairline);border-radius:999px;padding:3px;gap:2px;
+      }
+      .lang-toggle button{
+        border:0;background:transparent;color:var(--mid);font-size:13px;font-weight:500;
+        padding:0 14px;border-radius:999px;cursor:pointer;min-height:32px;line-height:1;
+      }
+      .lang-toggle button[aria-pressed="true"]{background:var(--ink);color:#fafafa}
+      .avatar{
+        width:34px;height:34px;border-radius:999px;background:var(--ink-soft);color:#fafafa;
+        display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex:none;
+      }
+
+      /* ---------- In-app nav ---------- */
+      nav.tabs{
+        display:flex;gap:4px;background:var(--paper);border:1px solid var(--hairline);
+        border-radius:999px;padding:4px;margin-bottom:28px;overflow-x:auto;scrollbar-width:none;
+      }
+      nav.tabs::-webkit-scrollbar{display:none}
+      nav.tabs button{
+        flex:1 0 auto;border:0;background:transparent;color:var(--mid);cursor:pointer;
+        font-size:14px;font-weight:500;padding:0 18px;border-radius:999px;min-height:38px;
+        display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap;
+      }
+      nav.tabs button svg{width:16px;height:16px;flex:none}
+      nav.tabs button[aria-selected="true"]{background:var(--ink);color:#fafafa}
+
+      main section.screen{display:none}
+      main section.screen.active{display:block}
+
+      /* ---------- Cards & stats ---------- */
+      .card{
+        background:var(--paper);border:1px solid var(--hairline);border-radius:var(--radius-card);
+        box-shadow:var(--shadow-card);padding:24px;
+      }
+      .stat-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr;gap:16px;margin-bottom:16px}
+      .stat-card{background:var(--paper);border:1px solid var(--hairline);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:24px}
+      .stat-label{font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--mid);margin:0 0 10px}
+      .stat-value{font-size:48px;font-weight:600;letter-spacing:-.05em;line-height:1.1;color:var(--ink);margin:0}
+      .stat-value .unit{font-size:20px;font-weight:500;letter-spacing:-.02em;color:var(--mid);margin-left:4px}
+      .stat-value.small{font-size:30px;letter-spacing:-.025em}
+      .stat-value.ok{color:var(--ok)}
+      .stat-sub{margin:10px 0 0;font-size:14px;color:var(--mid)}
+
+      .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:28px 0 12px}
+      .section-head h2{font-size:18px;font-weight:600;letter-spacing:-.025em;margin:0}
+      .btn{
+        display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;
+        border-radius:var(--radius-pill);font-size:14px;font-weight:500;padding:8px 16px;border:0;min-height:40px;
+      }
+      .btn svg{width:16px;height:16px}
+      .btn-primary{background:var(--ink);color:#fafafa}
+      .btn-ghost{background:var(--canvas);color:var(--ink)}
+      .btn-outline{background:transparent;color:var(--ink);border:1px solid var(--hairline)}
+      .btn-danger{background:transparent;color:var(--ember);border:1px solid var(--hairline)}
+
+      /* ---------- Item list ---------- */
+      .list-card{padding:8px 24px}
+      .item-row{
+        display:flex;align-items:center;gap:16px;padding:18px 0;border-bottom:1px solid var(--hairline);
+      }
+      .item-row:last-child{border-bottom:0}
+      .item-icon{
+        width:42px;height:42px;border-radius:12px;background:var(--surface-alt);border:1px solid var(--hairline);
+        display:flex;align-items:center;justify-content:center;flex:none;color:var(--ink-soft);
+      }
+      .item-icon svg{width:19px;height:19px}
+      .item-main{flex:1;min-width:0}
+      .item-name{font-weight:500;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+      .item-meta{color:var(--mid);font-size:13px;margin-top:2px}
+      .item-right{text-align:right;flex:none}
+      .item-amount{font-weight:600;font-size:16px;letter-spacing:-.01em}
+      .item-days{font-size:13px;font-weight:500;margin-top:2px;color:var(--mid)}
+      .item-days.red{color:var(--danger)}
+      .item-days.amber{color:var(--warn)}
+      .item-days.green{color:var(--ok)}
+      .badge{
+        display:inline-flex;align-items:center;border-radius:var(--radius-pill);padding:2px 8px;
+        font-size:12px;font-weight:500;line-height:1.5;white-space:nowrap;
+      }
+      .badge-soft{background:var(--canvas);color:var(--ink-soft)}
+      .badge-solid{background:var(--ink-soft);color:#fafafa}
+      .row-action{
+        flex:none;border:1px solid var(--hairline);background:var(--paper);color:var(--ink);
+        border-radius:var(--radius-pill);font-size:13px;font-weight:500;padding:0 14px;cursor:pointer;min-height:36px;
+      }
+
+      /* ---------- Upload ---------- */
+      .dropzone{
+        border:1.5px dashed #d4d4d4;border-radius:var(--radius-card);background:var(--surface-alt);
+        padding:44px 24px;text-align:center;
+      }
+      .dropzone .dz-icon{
+        width:52px;height:52px;border-radius:16px;background:var(--paper);border:1px solid var(--hairline);
+        margin:0 auto 16px;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);
+      }
+      .dropzone .dz-icon svg{width:24px;height:24px}
+      .dropzone h3{margin:0 0 6px;font-size:18px;font-weight:600;letter-spacing:-.025em}
+      .dropzone p{margin:0 0 20px;color:var(--mid)}
+      .dz-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+      .file-row{
+        display:flex;align-items:center;gap:14px;margin-top:16px;padding:16px 20px;
+      }
+      .file-thumb{
+        width:44px;height:56px;border-radius:8px;background:var(--surface-alt);border:1px solid var(--hairline);
+        display:flex;align-items:center;justify-content:center;color:var(--mid);flex:none;
+      }
+      .file-thumb svg{width:20px;height:20px}
+      .file-info{flex:1;min-width:0;text-align:left}
+      .file-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .file-meta{color:var(--mid);font-size:13px;margin-top:2px}
+      .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+      .chip{
+        border:1px solid var(--hairline);background:var(--paper);color:var(--ink-soft);
+        border-radius:999px;padding:0 14px;font-size:13px;font-weight:500;cursor:pointer;min-height:36px;
+      }
+      .chip[aria-pressed="true"]{background:var(--ink);color:#fafafa;border-color:var(--ink)}
+      .screen-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+      .screen-title{font-size:24px;font-weight:600;letter-spacing:-.025em;margin:0 0 6px}
+      .screen-sub{color:var(--mid);margin:0 0 20px}
+
+      .steps{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+      .step{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--mid)}
+      .step .dot{
+        width:24px;height:24px;border-radius:999px;border:1px solid var(--hairline);background:var(--paper);
+        display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--mid);
+      }
+      .step.current{color:var(--ink)}
+      .step.current .dot{background:var(--ink);border-color:var(--ink);color:#fafafa}
+      .step.done{color:var(--ink-soft)}
+      .step.done .dot{background:var(--canvas);color:var(--ink-soft)}
+      .step-sep{width:20px;height:1px;background:var(--hairline)}
+
+      /* ---------- Forms ---------- */
+      .lot-card{margin-bottom:16px}
+      .lot-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+      .lot-title{font-size:16px;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+      .field{display:flex;flex-direction:column;gap:7px}
+      .field.full{grid-column:1/-1}
+      .field label{font-size:13px;font-weight:500;color:var(--ink-soft)}
+      .field input,.field select{
+        background:var(--canvas);border:1px solid transparent;border-radius:var(--radius-pill);
+        padding:8px 16px;font-size:14px;color:var(--ink);width:100%;min-height:42px;outline:none;
+      }
+      .field input:focus,.field select:focus{border-color:var(--hairline);background:var(--paper)}
+      .field input::placeholder{color:var(--mid)}
+      .segmented{display:flex;background:var(--canvas);border-radius:999px;padding:3px;gap:2px}
+      .segmented button{
+        flex:1;border:0;background:transparent;color:var(--mid);font-size:14px;font-weight:500;
+        border-radius:999px;cursor:pointer;min-height:36px;padding:0 12px;
+      }
+      .segmented button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+      .source-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:16px 20px}
+
+      /* ---------- Reading state & empty state ---------- */
+      .reading-panel{
+        display:none;align-items:center;gap:16px;margin-top:16px;padding:20px 24px;
+      }
+      .reading-panel.on{display:flex}
+      .spinner{
+        width:26px;height:26px;border-radius:999px;flex:none;
+        border:3px solid var(--hairline);border-top-color:var(--ink);
+        animation:eg-spin .8s linear infinite;
+      }
+      @keyframes eg-spin{to{transform:rotate(360deg)}}
+      .reading-panel .rp-title{font-weight:600;font-size:15px}
+      .reading-panel .rp-sub{color:var(--mid);font-size:13px;margin-top:2px}
+      .btn[disabled]{opacity:.45;cursor:default}
+      .empty-box{padding:40px 24px;text-align:center}
+      .empty-box h3{margin:0 0 6px;font-size:18px;font-weight:600;letter-spacing:-.025em}
+      .empty-box p{margin:0 0 20px;color:var(--mid)}
+      .list-empty{padding:32px 24px;text-align:center;color:var(--mid)}
+
+      @media (max-width:720px){
+        .app{padding:0 14px 48px}
+        .stat-grid{grid-template-columns:1fr}
+        .stat-value{font-size:42px}
+        .form-grid{grid-template-columns:1fr}
+        nav.tabs{flex-wrap:wrap;border-radius:24px;overflow:visible}
+        nav.tabs button{flex:1 1 42%;padding:0 10px}
+        .list-card{padding:8px 18px}
+        .item-row{flex-wrap:wrap;gap:12px}
+        .item-main{flex:1 1 150px}
+        .item-right{margin-left:auto}
+        .row-action{margin-left:auto}
+        .screen-actions{justify-content:stretch}
+        .screen-actions .btn{flex:1}
+        .wordmark{font-size:17px}
+      }
+      @media (prefers-reduced-motion:reduce){
+        *{transition:none!important}
+      }
+    
+      .banner{margin:0 0 16px;padding:12px 18px;border-radius:var(--radius-pill);font-size:14px;border:1px solid var(--hairline);background:var(--paper)}
+      .banner.error{color:var(--danger);border-color:var(--danger)}
+      .banner.ok{color:var(--ok);border-color:var(--ok)}
+      .row-delete{color:var(--ember)}
+      .field input.extracted,.field select.extracted{background:#eef6ff}
+      .field input.invalid,.field select.invalid{border-color:var(--danger)}
+      .item-actions{display:flex;gap:8px;align-items:center}
+      [hidden]{display:none!important}
+      .login-wrap{max-width:420px;margin:32px auto 0}
+      .login-wrap form{display:flex;flex-direction:column;gap:16px}
+      .login-wrap .btn{width:100%}
+      .field-hint{font-size:12px;color:var(--mid);margin:0}
+    </style>
+  </head>
+  <body>
+    <div class="app">
+
+      <header class="topbar">
+        <div class="wordmark">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+          </span>
+          ExpireGuard
+        </div>
+        <div class="top-actions">
+          <div class="lang-toggle" role="group" aria-label="Language">
+            <button type="button" id="lang-en" aria-pressed="true">EN</button>
+            <button type="button" id="lang-ja" aria-pressed="false">日本語</button>
+          </div>
+          <button type="button" class="btn btn-outline" id="logout-btn" data-i18n="sign_out" hidden>Sign out</button>
+        </div>
+      </header>
+
+      <!-- ============ LOGIN ============ -->
+      <section id="login-view" class="login-wrap" hidden>
+        <div class="card">
+          <div id="login-message" class="banner" role="alert" hidden></div>
+
+          <form id="login-form" novalidate>
+            <div>
+              <h1 class="screen-title" data-i18n="login_title">Sign in</h1>
+              <p class="screen-sub" style="margin:0" data-i18n="login_sub">Use the account your administrator created for you.</p>
+            </div>
+            <div class="field">
+              <label for="login-email" data-i18n="login_email">Email</label>
+              <input type="email" id="login-email" autocomplete="username" inputmode="email" required />
+            </div>
+            <div class="field">
+              <label for="login-password" data-i18n="login_password">Password</label>
+              <input type="password" id="login-password" autocomplete="current-password" required />
+            </div>
+            <button type="submit" class="btn btn-primary" id="login-btn" data-i18n="login_btn">Sign in</button>
+          </form>
+
+          <form id="newpass-form" novalidate hidden>
+            <div>
+              <h1 class="screen-title" data-i18n="np_title">Set a new password</h1>
+              <p class="screen-sub" style="margin:0" data-i18n="np_sub">This is your first sign-in. Choose a new password to continue.</p>
+            </div>
+            <div class="field">
+              <label for="np-new" data-i18n="np_new">New password</label>
+              <input type="password" id="np-new" autocomplete="new-password" required />
+              <p class="field-hint" data-i18n="np_hint">At least 12 characters, with upper and lower case letters, a number and a symbol.</p>
+            </div>
+            <div class="field">
+              <label for="np-confirm" data-i18n="np_confirm">Confirm new password</label>
+              <input type="password" id="np-confirm" autocomplete="new-password" required />
+            </div>
+            <button type="submit" class="btn btn-primary" id="np-btn" data-i18n="np_btn">Set password and sign in</button>
+          </form>
+        </div>
+      </section>
+
+      <div id="app-view" hidden>
+      <nav class="tabs" role="tablist" aria-label="ExpireGuard">
+        <button type="button" role="tab" aria-selected="true" data-screen="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          <span data-i18n="nav_dashboard">Dashboard</span>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-screen="screenshot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>
+          <span data-i18n="nav_screenshot">Add screenshot</span>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-screen="review">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
+          <span data-i18n="nav_review">Review</span>
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-screen="manual">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/></svg>
+          <span data-i18n="nav_manual">Add manually</span>
+        </button>
+      </nav>
+
+      <main>
+        <div id="banner" class="banner" role="alert" hidden></div>
+        <!-- ============ DASHBOARD ============ -->
+        <section class="screen active" id="screen-dashboard" role="tabpanel">
+          <div class="stat-grid">
+            <div class="stat-card">
+              <p class="stat-label" data-i18n="stat_risk_label">Expiring in the next 30 days</p>
+              <p class="stat-value tnum"><span id="risk-amount">-</span></p>
+              <p class="stat-sub" id="risk-sub"></p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label" data-i18n="stat_charge_label">Auto-charge this month</p>
+              <p class="stat-value small tnum"><span id="charge-amount">-</span></p>
+              <p class="stat-sub" id="charge-sub"></p>
+            </div>
+            <div class="stat-card">
+              <p class="stat-label" data-i18n="stat_saved_label">Saved so far</p>
+              <p class="stat-value small ok tnum"><span id="saved-amount">-</span></p>
+              <p class="stat-sub" data-i18n="stat_saved_sub">Used or cancelled in time</p>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h2 data-i18n="list_title">Coming up</h2>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button type="button" class="btn btn-outline" id="test-notify-btn" data-i18n="test_notify">Send test notification</button>
+              <button type="button" class="btn btn-primary" data-goto="screenshot">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              <span data-i18n="add_btn">Add</span>
+            </button>
+            </div>
+          </div>
+
+          <div class="card list-card" id="item-list"></div>
+        </section>
+
+        <!-- ============ SCREENSHOT ============ -->
+        <section class="screen" id="screen-screenshot" role="tabpanel">
+          <h1 class="screen-title" data-i18n="up_title">Add a screenshot</h1>
+          <p class="screen-sub" data-i18n="up_sub">A balance screen or a subscription list. We read the amounts and dates for you.</p>
+
+          <div class="steps" aria-hidden="true">
+            <span class="step current"><span class="dot">1</span><span data-i18n="step_upload">Upload</span></span>
+            <span class="step-sep"></span>
+            <span class="step"><span class="dot">2</span><span data-i18n="step_review">Review</span></span>
+            <span class="step-sep"></span>
+            <span class="step"><span class="dot">3</span><span data-i18n="step_done">Done</span></span>
+          </div>
+
+          <div class="card">
+            <div class="dropzone">
+              <div class="dz-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              </div>
+              <h3 data-i18n="dz_title">Drop your screenshot here</h3>
+              <p data-i18n="dz_sub">PNG or JPG, up to 10 MB</p>
+              <div class="dz-actions">
+                <button type="button" class="btn btn-primary" id="dz-choose-btn" data-i18n="dz_choose">Choose file</button>
+                <input type="file" id="file-input" accept="image/png,image/jpeg" hidden />
+                <button type="button" class="btn btn-ghost" data-goto="manual" data-i18n="dz_manual">Enter manually instead</button>
+              </div>
+            </div>
+
+            <div class="card file-row" id="file-row" style="box-shadow:none;display:none">
+              <div class="file-thumb">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              </div>
+              <div class="file-info">
+                <div class="file-name" id="shot-file-name"></div>
+                <div class="file-meta" id="shot-file-meta"></div>
+              </div>
+              <span class="badge badge-solid" id="shot-file-badge" data-i18n="file_ready">Ready</span>
+            </div>
+
+            <div class="card reading-panel" id="reading-panel" role="status" aria-live="polite" style="box-shadow:none">
+              <div class="spinner" aria-hidden="true"></div>
+              <div>
+                <div class="rp-title" data-i18n="reading_title">Reading your screenshot…</div>
+                <div class="rp-sub" data-i18n="reading_sub">Finding amounts and expiry dates.</div>
+              </div>
+            </div>
+
+            <div class="screen-actions">
+              <button type="button" class="btn btn-ghost" data-goto="dashboard" data-i18n="cancel">Cancel</button>
+              <button type="button" class="btn btn-primary" id="extract-btn">
+                <span data-i18n="extract_btn">Extract</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ REVIEW ============ -->
+        <section class="screen" id="screen-review" role="tabpanel">
+          <h1 class="screen-title" data-i18n="rv_title">Review extracted items</h1>
+          <p class="screen-sub" data-i18n="rv_sub">Check the values before saving. Anything can be edited.</p>
+
+          <div class="steps" aria-hidden="true">
+            <span class="step done"><span class="dot">1</span><span data-i18n="step_upload">Upload</span></span>
+            <span class="step-sep"></span>
+            <span class="step current"><span class="dot">2</span><span data-i18n="step_review">Review</span></span>
+            <span class="step-sep"></span>
+            <span class="step"><span class="dot">3</span><span data-i18n="step_done">Done</span></span>
+          </div>
+
+          <div class="card source-row" style="box-shadow:none;padding:16px 20px">
+            <div class="file-thumb">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            </div>
+            <div class="file-info">
+              <div class="file-name" id="rv-file-name">paypay-points.png</div>
+              <div class="file-meta"><span id="rv-found"></span></div>
+            </div>
+          </div>
+
+          <div id="review-lots"></div>
+
+          <div class="card empty-box" id="review-empty" style="display:none">
+            <h3 data-i18n="rv_empty_title">Nothing to review</h3>
+            <p data-i18n="rv_empty_sub">Add a screenshot and the items we find will appear here.</p>
+            <button type="button" class="btn btn-primary" data-goto="screenshot" data-i18n="rv_empty_btn">Add a screenshot</button>
+          </div>
+
+          <div class="screen-actions" id="review-actions">
+            <button type="button" class="btn btn-outline" data-goto="screenshot" data-i18n="back">Back</button>
+            <button type="button" class="btn btn-primary" id="save-review-btn">Save</button>
+          </div>
+        </section>
+
+        <!-- ============ MANUAL ============ -->
+        <section class="screen" id="screen-manual" role="tabpanel">
+          <h1 class="screen-title" data-i18n="mn_title">Add manually</h1>
+          <p class="screen-sub" data-i18n="mn_sub">Points, coupons, or a subscription renewal.</p>
+
+          <div class="card">
+            <div class="form-grid">
+              <div class="field full">
+                <label data-i18n="f_kind">Kind</label>
+                <div class="segmented" id="kind-seg">
+                  <button type="button" aria-pressed="true" data-kind="points" data-i18n="kind_points">Points</button>
+                  <button type="button" aria-pressed="false" data-kind="subscription" data-i18n="kind_sub">Subscription</button>
+                </div>
+              </div>
+              <div class="field full">
+                <label data-i18n="f_service">Service</label>
+                <div class="chips" id="manual-chips" style="margin:0 0 10px"></div>
+                <input type="text" id="mn-service" data-i18n-ph="service_ph" placeholder="e.g. Rakuten Points" />
+              </div>
+              <div class="field" id="ptype-field">
+                <label data-i18n="f_ptype">Point type</label>
+                <div class="segmented" id="ptype-seg">
+                  <button type="button" aria-pressed="true" data-ptype="regular" data-i18n="type_regular_short">Regular</button>
+                  <button type="button" aria-pressed="false" data-ptype="limited" data-i18n="type_limited_short">Limited-time</button>
+                </div>
+              </div>
+              <div class="field" id="cycle-field" style="display:none">
+                <label data-i18n="f_cycle">Billing cycle</label>
+                <div class="segmented" id="cycle-seg">
+                  <button type="button" aria-pressed="true" data-cycle="monthly" data-i18n="cycle_monthly">Monthly</button>
+                  <button type="button" aria-pressed="false" data-cycle="yearly" data-i18n="cycle_yearly">Yearly</button>
+                </div>
+              </div>
+              <div class="field">
+                <label data-i18n="f_amount">Amount</label>
+                <input type="text" inputmode="numeric" id="mn-amount" data-i18n-ph="amount_ph" placeholder="e.g. 1,240 pt" class="tnum" />
+              </div>
+              <div class="field">
+                <label data-i18n="f_expiry" id="mn-date-label">Expiry date</label>
+                <input type="date" id="mn-date" class="tnum" />
+              </div>
+              <div class="field">
+                <label data-i18n="f_quick">Quick set</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button type="button" class="chip" data-quick="eom" data-i18n="quick_eom">End of this month</button>
+                  <button type="button" class="chip" data-quick="next" data-i18n="quick_next">End of next month</button>
+                </div>
+              </div>
+</div>
+            <div class="screen-actions">
+              <button type="button" class="btn btn-ghost" data-goto="dashboard" data-i18n="cancel">Cancel</button>
+              <button type="button" class="btn btn-primary" id="mn-add" data-i18n="add_item">Add item</button>
+            </div>
+          </div>
+        </section>
+      </main>
+      </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
